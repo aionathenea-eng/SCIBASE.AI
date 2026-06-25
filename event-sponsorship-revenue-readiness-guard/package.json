@@ -1,0 +1,13 @@
+{
+  "name": "event-sponsorship-revenue-readiness-guard",
+  "version": "1.0.0",
+  "description": "Deterministic revenue readiness guard for event sponsorship invoices and release decisions.",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "check": "node --check index.js && node --check sample-data.js && node --check test.js && node --check demo.js",
+    "test": "node test.js",
+    "demo": "node demo.js"
+  },
+  "license": "MIT"
+}

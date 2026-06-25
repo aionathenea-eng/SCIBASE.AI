@@ -1,0 +1,263 @@
+{
+  "summary": {
+    "schema_version": "event_sponsorship_revenue_readiness_summary_v1",
+    "packet_count": 4,
+    "decision_counts": {
+      "RELEASE_INVOICE": 1,
+      "REVIEW_BEFORE_RELEASE": 1,
+      "HOLD_INVOICE": 2
+    },
+    "packets_ready_to_invoice": 1,
+    "packets_requiring_review": 1,
+    "packets_on_hold": 2,
+    "audit_note": "Synthetic event sponsorship packets only; no payment processors, bank data, credentials, or external APIs used."
+  },
+  "evaluations": [
+    {
+      "schema_version": "event_sponsorship_revenue_readiness_guard_v1",
+      "packet_id": "packet-ready-platinum",
+      "event_id": "deep-events-berlin-2026",
+      "sponsor_id": "sponsor-orion-labs",
+      "package_tier": "platinum",
+      "invoice_amount_usd": 25000,
+      "decision": "RELEASE_INVOICE",
+      "readiness_score": 100,
+      "reason_count": 0,
+      "reasons": [],
+      "finance_actions": [],
+      "metrics": {
+        "deliverable_readiness_percent": 100,
+        "lead_readiness_percent": 100,
+        "evidence_readiness_percent": 100,
+        "lead_shortfall": 0,
+        "exclusivity_conflict_count": 0,
+        "refund_exposure_usd": 0
+      },
+      "audit_packet": {
+        "synthetic_data_only": true,
+        "external_apis_used": false,
+        "payment_processors_called": false,
+        "private_customer_data_used": false,
+        "packet_sha256": "09ddd62a317d1c6e6b7e91579183eb22dd02e7df5f0e9ac9e7c518f529d68e2e"
+      }
+    },
+    {
+      "schema_version": "event_sponsorship_revenue_readiness_guard_v1",
+      "packet_id": "packet-review-logo-signoff",
+      "event_id": "deep-events-paris-2026",
+      "sponsor_id": "sponsor-nova-data",
+      "package_tier": "gold",
+      "invoice_amount_usd": 14000,
+      "decision": "REVIEW_BEFORE_RELEASE",
+      "readiness_score": 82,
+      "reason_count": 2,
+      "reasons": [
+        {
+          "code": "DELIVERABLE_SIGNOFF_MISSING",
+          "severity": "review",
+          "message": "Required deliverable lacks sponsor signoff: Homepage logo placement.",
+          "remediation": "Collect sponsor signoff or mark the line item for manual finance review."
+        },
+        {
+          "code": "PROOF_ARTIFACT_MISSING",
+          "severity": "review",
+          "message": "Proof artifact is missing: deliverable_signoff.",
+          "remediation": "Attach proof artifact before revenue packet is marked audit-ready."
+        }
+      ],
+      "finance_actions": [],
+      "metrics": {
+        "deliverable_readiness_percent": 67,
+        "lead_readiness_percent": 100,
+        "evidence_readiness_percent": 67,
+        "lead_shortfall": 0,
+        "exclusivity_conflict_count": 0,
+        "refund_exposure_usd": 0
+      },
+      "audit_packet": {
+        "synthetic_data_only": true,
+        "external_apis_used": false,
+        "payment_processors_called": false,
+        "private_customer_data_used": false,
+        "packet_sha256": "c52dadd3606e19ac006fe5ae187549aab0fd0887bef26510c79569a4d1bb183a"
+      }
+    },
+    {
+      "schema_version": "event_sponsorship_revenue_readiness_guard_v1",
+      "packet_id": "packet-hold-exclusivity",
+      "event_id": "deep-events-lisbon-2026",
+      "sponsor_id": "sponsor-vector-capital",
+      "package_tier": "platinum",
+      "invoice_amount_usd": 30000,
+      "decision": "HOLD_INVOICE",
+      "readiness_score": 38,
+      "reason_count": 8,
+      "reasons": [
+        {
+          "code": "PURCHASE_ORDER_NOT_APPROVED",
+          "severity": "review",
+          "message": "Purchase order or finance approval is missing.",
+          "remediation": "Attach approved PO or finance approval before invoice release."
+        },
+        {
+          "code": "REFUND_WINDOW_OR_EXPOSURE_OPEN",
+          "severity": "hold",
+          "message": "Cancellation or refund exposure is still open.",
+          "remediation": "Defer invoice release or record finance review until refund exposure is cleared."
+        },
+        {
+          "code": "SPONSOR_EXCLUSIVITY_CONFLICT",
+          "severity": "hold",
+          "message": "Sponsor category exclusivity conflicts with another sponsor.",
+          "remediation": "Resolve category conflict or amend sponsorship package before release."
+        },
+        {
+          "code": "REQUIRED_DELIVERABLE_INCOMPLETE",
+          "severity": "hold",
+          "message": "Required deliverable is incomplete: Exclusive category slot.",
+          "remediation": "Complete the deliverable or reduce the invoiceable package scope."
+        },
+        {
+          "code": "REQUIRED_DELIVERABLE_INCOMPLETE",
+          "severity": "hold",
+          "message": "Required deliverable is incomplete: Qualified attendee lead export.",
+          "remediation": "Complete the deliverable or reduce the invoiceable package scope."
+        },
+        {
+          "code": "ATTENDEE_LEAD_GUARANTEE_SHORTFALL",
+          "severity": "hold",
+          "message": "Qualified leads delivered (74) are below the acceptable floor (180).",
+          "remediation": "Deliver remaining qualified leads, apply make-good credit, or reduce invoice amount."
+        },
+        {
+          "code": "PROOF_ARTIFACT_MISSING",
+          "severity": "review",
+          "message": "Proof artifact is missing: deliverable_signoff.",
+          "remediation": "Attach proof artifact before revenue packet is marked audit-ready."
+        },
+        {
+          "code": "PROOF_ARTIFACT_MISSING",
+          "severity": "review",
+          "message": "Proof artifact is missing: lead_export_hash.",
+          "remediation": "Attach proof artifact before revenue packet is marked audit-ready."
+        }
+      ],
+      "finance_actions": [
+        "request PO or finance approval evidence",
+        "defer release until cancellation/refund exposure closes",
+        "route exclusivity conflict to sponsorship owner",
+        "calculate make-good credit or revised invoice amount"
+      ],
+      "metrics": {
+        "deliverable_readiness_percent": 33,
+        "lead_readiness_percent": 41,
+        "evidence_readiness_percent": 33,
+        "lead_shortfall": 106,
+        "exclusivity_conflict_count": 1,
+        "refund_exposure_usd": 18000
+      },
+      "audit_packet": {
+        "synthetic_data_only": true,
+        "external_apis_used": false,
+        "payment_processors_called": false,
+        "private_customer_data_used": false,
+        "packet_sha256": "cd37765dc01d96fb70775152c728ffc617fb0b498021c429796d2b033410fbd6"
+      }
+    },
+    {
+      "schema_version": "event_sponsorship_revenue_readiness_guard_v1",
+      "packet_id": "packet-hold-no-contract",
+      "event_id": "deep-events-remote-2026",
+      "sponsor_id": "sponsor-signal-harbor",
+      "package_tier": "silver",
+      "invoice_amount_usd": 6500,
+      "decision": "HOLD_INVOICE",
+      "readiness_score": 0,
+      "reason_count": 10,
+      "reasons": [
+        {
+          "code": "SPONSOR_CONTRACT_UNSIGNED",
+          "severity": "hold",
+          "message": "Sponsorship contract is not signed.",
+          "remediation": "Collect signed sponsorship agreement before invoicing or releasing revenue."
+        },
+        {
+          "code": "PURCHASE_ORDER_NOT_APPROVED",
+          "severity": "hold",
+          "message": "Purchase order or finance approval is missing.",
+          "remediation": "Attach approved PO or finance approval before invoice release."
+        },
+        {
+          "code": "SPONSOR_APPROVAL_MISSING",
+          "severity": "hold",
+          "message": "Sponsor has not approved the final package state.",
+          "remediation": "Obtain sponsor signoff for package scope before recognizing revenue readiness."
+        },
+        {
+          "code": "REFUND_WINDOW_OR_EXPOSURE_OPEN",
+          "severity": "hold",
+          "message": "Cancellation or refund exposure is still open.",
+          "remediation": "Defer invoice release or record finance review until refund exposure is cleared."
+        },
+        {
+          "code": "REQUIRED_DELIVERABLE_INCOMPLETE",
+          "severity": "hold",
+          "message": "Required deliverable is incomplete: Sponsor page logo.",
+          "remediation": "Complete the deliverable or reduce the invoiceable package scope."
+        },
+        {
+          "code": "REQUIRED_DELIVERABLE_INCOMPLETE",
+          "severity": "hold",
+          "message": "Required deliverable is incomplete: Qualified attendee lead export.",
+          "remediation": "Complete the deliverable or reduce the invoiceable package scope."
+        },
+        {
+          "code": "ATTENDEE_LEAD_GUARANTEE_SHORTFALL",
+          "severity": "hold",
+          "message": "Qualified leads delivered (0) are below the acceptable floor (35).",
+          "remediation": "Deliver remaining qualified leads, apply make-good credit, or reduce invoice amount."
+        },
+        {
+          "code": "PROOF_ARTIFACT_MISSING",
+          "severity": "review",
+          "message": "Proof artifact is missing: contract.",
+          "remediation": "Attach proof artifact before revenue packet is marked audit-ready."
+        },
+        {
+          "code": "PROOF_ARTIFACT_MISSING",
+          "severity": "review",
+          "message": "Proof artifact is missing: deliverable_signoff.",
+          "remediation": "Attach proof artifact before revenue packet is marked audit-ready."
+        },
+        {
+          "code": "PROOF_ARTIFACT_MISSING",
+          "severity": "review",
+          "message": "Proof artifact is missing: lead_export_hash.",
+          "remediation": "Attach proof artifact before revenue packet is marked audit-ready."
+        }
+      ],
+      "finance_actions": [
+        "hold invoice until contract is signed",
+        "request PO or finance approval evidence",
+        "collect sponsor package approval",
+        "defer release until cancellation/refund exposure closes",
+        "calculate make-good credit or revised invoice amount"
+      ],
+      "metrics": {
+        "deliverable_readiness_percent": 0,
+        "lead_readiness_percent": 0,
+        "evidence_readiness_percent": 0,
+        "lead_shortfall": 35,
+        "exclusivity_conflict_count": 0,
+        "refund_exposure_usd": 6500
+      },
+      "audit_packet": {
+        "synthetic_data_only": true,
+        "external_apis_used": false,
+        "payment_processors_called": false,
+        "private_customer_data_used": false,
+        "packet_sha256": "e31e26d3b2303d27340d85ad7967cb6baa861e54e61f345975741371b987bb02"
+      }
+    }
+  ]
+}
