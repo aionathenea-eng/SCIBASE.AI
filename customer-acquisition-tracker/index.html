@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Captação de Clientes</title>
+<style>
+  :root {
+    --bg: #0f1420;
+    --panel: #171e2e;
+    --panel-2: #1e2739;
+    --border: #2a3547;
+    --text: #e7ecf4;
+    --muted: #93a1b8;
+    --accent: #5b8def;
+    --won: #2fbf71;
+    --lost: #ef5b6b;
+    --pending: #f4b740;
+    --shadow: 0 6px 24px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.45;
+  }
+  header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: linear-gradient(180deg, #131a29, #0f1420);
+  }
+  h1 { font-size: 20px; margin: 0; letter-spacing: .3px; }
+  h1 span { color: var(--accent); }
+  .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .6px; }
+  .card .value { font-size: 28px; font-weight: 700; margin-top: 6px; }
+  .card.won .value { color: var(--won); }
+  .card.lost .value { color: var(--lost); }
+  .card.pending .value { color: var(--pending); }
+  .card.rate .value { color: var(--accent); }
+
+  .grid2 { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 820px) { .grid2 { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+  }
+  .panel h2 { font-size: 15px; margin: 0 0 14px; }
+
+  label.field { display: block; margin-bottom: 12px; font-size: 13px; color: var(--muted); }
+  label.field span { display: block; margin-bottom: 5px; }
+  input, select, textarea, button {
+    font-family: inherit; font-size: 14px;
+  }
+  input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 60px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 9px;
+    padding: 10px 16px;
+    font-weight: 600;
+    background: var(--accent);
+    color: #fff;
+    transition: filter .15s;
+  }
+  button:hover { filter: brightness(1.08); }
+  button.ghost { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); }
+  button.small { padding: 6px 10px; font-size: 12px; }
+
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  .toolbar input, .toolbar select { width: auto; flex: 1 1 160px; }
+  .toolbar .spacer { flex: 1; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .4px; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+  .table-scroll { overflow-x: auto; }
+
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .badge.won { background: rgba(47,191,113,.15); color: var(--won); }
+  .badge.lost { background: rgba(239,91,107,.15); color: var(--lost); }
+  .badge.pending { background: rgba(244,183,64,.15); color: var(--pending); }
+
+  .status-select { padding: 4px 8px; font-size: 12px; width: auto; }
+  .del { background: transparent; color: var(--lost); padding: 4px 8px; }
+  .del:hover { background: rgba(239,91,107,.12); }
+
+  .empty { text-align: center; color: var(--muted); padding: 40px 0; }
+
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px; }
+  .bar-row .name { width: 110px; color: var(--muted); flex-shrink: 0; }
+  .bar-track { flex: 1; background: var(--panel-2); border-radius: 6px; height: 22px; overflow: hidden; display: flex; }
+  .bar-fill { height: 100%; display: flex; align-items: center; }
+  .bar-fill.won { background: var(--won); }
+  .bar-fill.lost { background: var(--lost); }
+  .bar-fill.pending { background: var(--pending); }
+  .bar-row .count { width: 90px; text-align: right; color: var(--muted); flex-shrink: 0; }
+
+  .funnel { display: flex; flex-direction: column; gap: 8px; }
+  .funnel .seg { border-radius: 8px; padding: 12px 14px; font-weight: 600; color: #fff; }
+
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 24px; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Captação de <span>Clientes</span></h1>
+    <div class="sub">Regista contactos, mede conversões e vê o que resultou.</div>
+  </div>
+  <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <button class="ghost small" id="exportCsv">Exportar CSV</button>
+    <button class="ghost small" id="exportJson">Backup JSON</button>
+    <button class="ghost small" id="importBtn">Importar</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" />
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- KPIs -->
+  <div class="cards" id="cards"></div>
+
+  <div class="grid2">
+    <!-- Left: form + list -->
+    <div>
+      <div class="panel">
+        <h2>Novo contacto</h2>
+        <form id="form">
+          <label class="field"><span>Nome / Empresa *</span>
+            <input id="name" required placeholder="Ex.: Ana Silva — Acme Lda" />
+          </label>
+          <div class="row2">
+            <label class="field"><span>Canal</span>
+              <select id="channel">
+                <option>Email</option>
+                <option>Telefone</option>
+                <option>LinkedIn</option>
+                <option>Referência</option>
+                <option>Evento</option>
+                <option>Website</option>
+                <option>Outro</option>
+              </select>
+            </label>
+            <label class="field"><span>Data</span>
+              <input id="date" type="date" />
+            </label>
+          </div>
+          <div class="row2">
+            <label class="field"><span>Estado</span>
+              <select id="status">
+                <option value="pending">Pendente</option>
+                <option value="won">Ganho (resultou)</option>
+                <option value="lost">Perdido (não resultou)</option>
+              </select>
+            </label>
+            <label class="field"><span>Valor potencial (€)</span>
+              <input id="value" type="number" min="0" step="1" placeholder="0" />
+            </label>
+          </div>
+          <label class="field"><span>Notas</span>
+            <textarea id="notes" placeholder="Contexto, próximos passos, motivo de perda..."></textarea>
+          </label>
+          <button type="submit">Adicionar contacto</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h2>Contactos</h2>
+        <div class="toolbar">
+          <input id="search" placeholder="Procurar nome / notas..." />
+          <select id="filterStatus">
+            <option value="">Todos os estados</option>
+            <option value="pending">Pendentes</option>
+            <option value="won">Ganhos</option>
+            <option value="lost">Perdidos</option>
+          </select>
+          <select id="filterChannel"><option value="">Todos os canais</option></select>
+        </div>
+        <div class="table-scroll">
+          <table id="table">
+            <thead>
+              <tr><th>Contacto</th><th>Canal</th><th>Data</th><th>Valor</th><th>Estado</th><th></th></tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="empty" style="display:none">Ainda não há contactos. Adiciona o primeiro acima. 👆</div>
+      </div>
+    </div>
+
+    <!-- Right: analytics -->
+    <div>
+      <div class="panel">
+        <h2>Funil de conversão</h2>
+        <div class="funnel" id="funnel"></div>
+        <div class="hint" id="funnelHint"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Desempenho por canal</h2>
+        <div id="channels"></div>
+        <div class="empty" id="channelsEmpty" style="display:none">Sem dados.</div>
+      </div>
+
+      <div class="panel">
+        <h2>Valor</h2>
+        <div id="valueBox" style="font-size:13px; color:var(--muted); line-height:1.9"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>Dados guardados localmente no teu navegador · Faz backup JSON regularmente.</footer>
+
+<script>
+(function () {
+  "use strict";
+  const KEY = "cac_contacts_v1";
+  const $ = (s) => document.querySelector(s);
+  const euro = (n) => "€" + (Number(n) || 0).toLocaleString("pt-PT");
+  const STATUS_LABEL = { pending: "Pendente", won: "Ganho", lost: "Perdido" };
+
+  let contacts = load();
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function save() { localStorage.setItem(KEY, JSON.stringify(contacts)); }
+
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  // --- Form ---
+  $("#date").value = new Date().toISOString().slice(0, 10);
+  $("#form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = $("#name").value.trim();
+    if (!name) return;
+    contacts.unshift({
+      id: uid(),
+      name,
+      channel: $("#channel").value,
+      date: $("#date").value || new Date().toISOString().slice(0, 10),
+      status: $("#status").value,
+      value: Number($("#value").value) || 0,
+      notes: $("#notes").value.trim(),
+    });
+    save();
+    e.target.reset();
+    $("#date").value = new Date().toISOString().slice(0, 10);
+    render();
+  });
+
+  // --- Render ---
+  function render() {
+    renderCards();
+    renderTable();
+    renderFunnel();
+    renderChannels();
+    renderValue();
+    renderChannelFilter();
+  }
+
+  function counts() {
+    const c = { total: contacts.length, won: 0, lost: 0, pending: 0 };
+    contacts.forEach((x) => { c[x.status]++; });
+    return c;
+  }
+
+  function renderCards() {
+    const c = counts();
+    const closed = c.won + c.lost;
+    const rate = closed ? Math.round((c.won / closed) * 100) : 0;
+    const cards = [
+      { label: "Total contactos", value: c.total, cls: "" },
+      { label: "Ganhos", value: c.won, cls: "won" },
+      { label: "Perdidos", value: c.lost, cls: "lost" },
+      { label: "Pendentes", value: c.pending, cls: "pending" },
+      { label: "Taxa conversão", value: rate + "%", cls: "rate" },
+    ];
+    $("#cards").innerHTML = cards.map((k) =>
+      `<div class="card ${k.cls}"><div class="label">${k.label}</div><div class="value">${k.value}</div></div>`
+    ).join("");
+  }
+
+  function filtered() {
+    const q = $("#search").value.toLowerCase();
+    const fs = $("#filterStatus").value;
+    const fc = $("#filterChannel").value;
+    return contacts.filter((x) => {
+      if (fs && x.status !== fs) return false;
+      if (fc && x.channel !== fc) return false;
+      if (q && !(x.name.toLowerCase().includes(q) || (x.notes || "").toLowerCase().includes(q))) return false;
+      return true;
+    });
+  }
+
+  function renderTable() {
+    const rows = filtered();
+    const tbody = $("#tbody");
+    $("#empty").style.display = contacts.length ? "none" : "block";
+    tbody.innerHTML = rows.map((x) => `
+      <tr data-id="${x.id}">
+        <td>
+          <div style="font-weight:600">${escapeHtml(x.name)}</div>
+          ${x.notes ? `<div style="color:var(--muted);font-size:12px;margin-top:2px">${escapeHtml(x.notes)}</div>` : ""}
+        </td>
+        <td>${escapeHtml(x.channel)}</td>
+        <td>${x.date || "-"}</td>
+        <td>${x.value ? euro(x.value) : "-"}</td>
+        <td>
+          <select class="status-select" data-act="status">
+            <option value="pending" ${x.status === "pending" ? "selected" : ""}>Pendente</option>
+            <option value="won" ${x.status === "won" ? "selected" : ""}>Ganho</option>
+            <option value="lost" ${x.status === "lost" ? "selected" : ""}>Perdido</option>
+          </select>
+        </td>
+        <td><button class="del small" data-act="del" title="Eliminar">✕</button></td>
+      </tr>
+    `).join("");
+
+    tbody.querySelectorAll('[data-act="status"]').forEach((sel) => {
+      sel.addEventListener("change", (e) => {
+        const id = e.target.closest("tr").dataset.id;
+        const item = contacts.find((c) => c.id === id);
+        if (item) { item.status = e.target.value; save(); render(); }
+      });
+    });
+    tbody.querySelectorAll('[data-act="del"]').forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const id = e.target.closest("tr").dataset.id;
+        contacts = contacts.filter((c) => c.id !== id);
+        save(); render();
+      });
+    });
+  }
+
+  function renderFunnel() {
+    const c = counts();
+    const max = c.total || 1;
+    const segs = [
+      { k: "Contactados", n: c.total, color: "var(--accent)" },
+      { k: "Em aberto (pendentes)", n: c.pending, color: "var(--pending)" },
+      { k: "Ganhos (resultaram)", n: c.won, color: "var(--won)" },
+      { k: "Perdidos", n: c.lost, color: "var(--lost)" },
+    ];
+    $("#funnel").innerHTML = segs.map((s) => {
+      const w = Math.max(12, Math.round((s.n / max) * 100));
+      return `<div class="seg" style="background:${s.color};width:${w}%">${s.k}: ${s.n}</div>`;
+    }).join("");
+    const closed = c.won + c.lost;
+    const rate = closed ? Math.round((c.won / closed) * 100) : 0;
+    $("#funnelHint").textContent = closed
+      ? `De ${closed} contactos fechados, ${c.won} resultaram — taxa de conversão de ${rate}%.`
+      : "Ainda sem contactos fechados para calcular conversão.";
+  }
+
+  function renderChannels() {
+    const map = {};
+    contacts.forEach((x) => {
+      map[x.channel] = map[x.channel] || { won: 0, lost: 0, pending: 0, total: 0 };
+      map[x.channel][x.status]++;
+      map[x.channel].total++;
+    });
+    const entries = Object.entries(map).sort((a, b) => b[1].total - a[1].total);
+    $("#channelsEmpty").style.display = entries.length ? "none" : "block";
+    const maxTotal = entries.reduce((m, [, v]) => Math.max(m, v.total), 0) || 1;
+    $("#channels").innerHTML = entries.map(([name, v]) => {
+      const seg = (n, cls) => n ? `<div class="bar-fill ${cls}" style="width:${(n / maxTotal) * 100}%"></div>` : "";
+      const rate = (v.won + v.lost) ? Math.round((v.won / (v.won + v.lost)) * 100) : 0;
+      return `<div class="bar-row">
+        <div class="name">${escapeHtml(name)}</div>
+        <div class="bar-track">${seg(v.won, "won")}${seg(v.pending, "pending")}${seg(v.lost, "lost")}</div>
+        <div class="count">${v.total} · ${rate}%</div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderValue() {
+    let won = 0, pipeline = 0;
+    contacts.forEach((x) => {
+      if (x.status === "won") won += x.value || 0;
+      if (x.status === "pending") pipeline += x.value || 0;
+    });
+    $("#valueBox").innerHTML = `
+      <div>💰 Valor ganho: <strong style="color:var(--won)">${euro(won)}</strong></div>
+      <div>⏳ Em pipeline (pendentes): <strong style="color:var(--pending)">${euro(pipeline)}</strong></div>
+    `;
+  }
+
+  function renderChannelFilter() {
+    const sel = $("#filterChannel");
+    const cur = sel.value;
+    const chans = [...new Set(contacts.map((c) => c.channel))].sort();
+    sel.innerHTML = '<option value="">Todos os canais</option>' +
+      chans.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+    sel.value = cur;
+  }
+
+  // --- Filters ---
+  ["#search", "#filterStatus", "#filterChannel"].forEach((s) =>
+    $(s).addEventListener("input", renderTable));
+
+  // --- Export / Import ---
+  $("#exportJson").addEventListener("click", () => {
+    downloadFile("contactos-backup.json", JSON.stringify(contacts, null, 2), "application/json");
+  });
+  $("#exportCsv").addEventListener("click", () => {
+    const head = ["Nome/Empresa", "Canal", "Data", "Estado", "Valor", "Notas"];
+    const rows = contacts.map((x) => [
+      x.name, x.channel, x.date, STATUS_LABEL[x.status] || x.status, x.value || 0, (x.notes || "").replace(/\n/g, " "),
+    ]);
+    const csv = [head, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
+    downloadFile("contactos.csv", "﻿" + csv, "text/csv");
+  });
+  $("#importBtn").addEventListener("click", () => $("#importFile").click());
+  $("#importFile").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!Array.isArray(data)) throw new Error("Formato inválido");
+        contacts = data.map((x) => ({
+          id: x.id || uid(), name: x.name || "(sem nome)", channel: x.channel || "Outro",
+          date: x.date || "", status: ["won", "lost", "pending"].includes(x.status) ? x.status : "pending",
+          value: Number(x.value) || 0, notes: x.notes || "",
+        }));
+        save(); render();
+        alert("Importados " + contacts.length + " contactos.");
+      } catch (err) { alert("Erro ao importar: " + err.message); }
+      e.target.value = "";
+    };
+    reader.readAsText(file);
+  });
+
+  function downloadFile(name, content, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function csvCell(v) {
+    v = String(v == null ? "" : v);
+    return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
