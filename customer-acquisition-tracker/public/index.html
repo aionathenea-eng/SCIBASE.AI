@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Captação de Clientes</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>" />
 <style>
   :root {
     --bg: #0f1420;
@@ -152,6 +153,10 @@
   </div>
 </header>
 
+<div id="banner" style="display:none; background:rgba(244,183,64,.15); color:var(--pending); border-bottom:1px solid var(--border); padding:10px 24px; font-size:13px; text-align:center;">
+  ⚠️ Modo offline — o servidor não está acessível. As alterações ficam guardadas só neste dispositivo.
+</div>
+
 <div class="wrap">
   <!-- KPIs -->
   <div class="cards" id="cards"></div>
@@ -246,7 +251,7 @@
   </div>
 </div>
 
-<footer>Dados guardados localmente no teu navegador · Faz backup JSON regularmente.</footer>
+<footer>Dados partilhados através do servidor · Faz backup JSON regularmente.</footer>
 
 <script>
 (function () {
@@ -256,35 +261,73 @@
   const euro = (n) => "€" + (Number(n) || 0).toLocaleString("pt-PT");
   const STATUS_LABEL = { pending: "Pendente", won: "Ganho", lost: "Perdido" };
 
-  let contacts = load();
+  let contacts = [];
+  let online = true; // true = servidor partilhado; false = fallback local
 
-  function load() {
-    try { return JSON.parse(localStorage.getItem(KEY)) || []; }
-    catch (e) { return []; }
+  // Cache local (para leitura offline / abrir o ficheiro sem servidor)
+  function cache() { try { localStorage.setItem(KEY, JSON.stringify(contacts)); } catch (e) {} }
+  function loadCache() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; }
   }
-  function save() { localStorage.setItem(KEY, JSON.stringify(contacts)); }
-
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  // --- API ---
+  async function api(method, path, body) {
+    const res = await fetch(path, {
+      method,
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) {
+      let msg = "Erro " + res.status;
+      try { msg = (await res.json()).error || msg; } catch (e) {}
+      throw new Error(msg);
+    }
+    return res.status === 204 ? null : res.json();
+  }
+
+  function setOnline(v) {
+    online = v;
+    const banner = $("#banner");
+    banner.style.display = v ? "none" : "block";
+  }
+
+  // Recarrega do servidor; se falhar, entra em modo offline com a cache local.
+  async function refresh() {
+    try {
+      contacts = await api("GET", "/api/contacts");
+      setOnline(true);
+      cache();
+    } catch (e) {
+      contacts = loadCache();
+      setOnline(false);
+    }
+    render();
+  }
 
   // --- Form ---
   $("#date").value = new Date().toISOString().slice(0, 10);
-  $("#form").addEventListener("submit", (e) => {
+  $("#form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const name = $("#name").value.trim();
     if (!name) return;
-    contacts.unshift({
-      id: uid(),
+    const payload = {
       name,
       channel: $("#channel").value,
       date: $("#date").value || new Date().toISOString().slice(0, 10),
       status: $("#status").value,
       value: Number($("#value").value) || 0,
       notes: $("#notes").value.trim(),
-    });
-    save();
+    };
+    if (online) {
+      try { await api("POST", "/api/contacts", payload); await refresh(); }
+      catch (err) { alert("Não foi possível guardar: " + err.message); return; }
+    } else {
+      contacts.unshift({ id: uid(), ...payload });
+      cache(); render();
+    }
     e.target.reset();
     $("#date").value = new Date().toISOString().slice(0, 10);
-    render();
   });
 
   // --- Render ---
@@ -356,17 +399,27 @@
     `).join("");
 
     tbody.querySelectorAll('[data-act="status"]').forEach((sel) => {
-      sel.addEventListener("change", (e) => {
+      sel.addEventListener("change", async (e) => {
         const id = e.target.closest("tr").dataset.id;
+        const status = e.target.value;
         const item = contacts.find((c) => c.id === id);
-        if (item) { item.status = e.target.value; save(); render(); }
+        if (online) {
+          try { await api("PATCH", "/api/contacts/" + id, { status }); await refresh(); }
+          catch (err) { alert("Não foi possível atualizar: " + err.message); refresh(); }
+        } else if (item) {
+          item.status = status; cache(); render();
+        }
       });
     });
     tbody.querySelectorAll('[data-act="del"]').forEach((btn) => {
-      btn.addEventListener("click", (e) => {
+      btn.addEventListener("click", async (e) => {
         const id = e.target.closest("tr").dataset.id;
-        contacts = contacts.filter((c) => c.id !== id);
-        save(); render();
+        if (online) {
+          try { await api("DELETE", "/api/contacts/" + id); await refresh(); }
+          catch (err) { alert("Não foi possível eliminar: " + err.message); }
+        } else {
+          contacts = contacts.filter((c) => c.id !== id); cache(); render();
+        }
       });
     });
   }
@@ -454,17 +507,24 @@
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const data = JSON.parse(reader.result);
         if (!Array.isArray(data)) throw new Error("Formato inválido");
-        contacts = data.map((x) => ({
-          id: x.id || uid(), name: x.name || "(sem nome)", channel: x.channel || "Outro",
+        const rows = data.map((x) => ({
+          name: x.name || "(sem nome)", channel: x.channel || "Outro",
           date: x.date || "", status: ["won", "lost", "pending"].includes(x.status) ? x.status : "pending",
           value: Number(x.value) || 0, notes: x.notes || "",
         }));
-        save(); render();
-        alert("Importados " + contacts.length + " contactos.");
+        if (online) {
+          const r = await api("POST", "/api/contacts/import", rows);
+          await refresh();
+          alert("Importados " + r.imported + " contactos.");
+        } else {
+          contacts = rows.map((r) => ({ id: uid(), ...r })).concat(contacts);
+          cache(); render();
+          alert("Importados " + rows.length + " contactos (modo offline).");
+        }
       } catch (err) { alert("Erro ao importar: " + err.message); }
       e.target.value = "";
     };
@@ -487,7 +547,7 @@
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
-  render();
+  refresh();
 })();
 </script>
 </body>
