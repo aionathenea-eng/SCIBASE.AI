@@ -1,0 +1,19 @@
+# Deploy na Render (https://render.com) — cria um "Web Service" a partir deste repositório.
+# O disco persistente garante que os contactos NÃO se perdem entre reinícios/atualizações.
+services:
+  - type: web
+    name: captacao-clientes
+    runtime: node
+    rootDir: customer-acquisition-tracker
+    plan: starter            # "starter" tem disco persistente. "free" funciona para testar, mas os dados podem apagar-se nos reinícios.
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: DB_PATH
+        value: /data/data.db  # base de dados guardada no disco persistente
+      - key: NODE_VERSION
+        value: "20"
+    disk:
+      name: dados
+      mountPath: /data
+      sizeGB: 1

@@ -1,0 +1,19 @@
+{
+  "name": "agente-galicia-crm",
+  "version": "1.0.0",
+  "description": "CRM de contactos da Agente Galicia — para Andre e Cristina, com API para o Codex.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "hash-password": "node scripts/hash-password.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1"
+  }
+}

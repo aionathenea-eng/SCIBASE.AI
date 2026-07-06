@@ -1,0 +1,14 @@
+{
+  "name": "Captação de Clientes",
+  "short_name": "Contactos",
+  "description": "Regista contactos e mede a captação de clientes.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1420",
+  "theme_color": "#0f1420",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
