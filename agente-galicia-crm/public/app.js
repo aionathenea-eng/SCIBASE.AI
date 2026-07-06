@@ -4,14 +4,14 @@
   const STATUS_META = {
     pendiente: "Pendiente",
     enviado: "Contactado",
-    respondio: "Respondió",
+    respondio: "Respondio",
     interesado: "Interesado",
     demo_agendada: "Demo agendada",
     no_interesado: "No interesado",
     cliente: "Cliente",
   };
   const STATUS_ORDER = Object.keys(STATUS_META);
-  const OWNER_LABEL = { andre: "André", cristina: "Cristina" };
+  const OWNER_LABEL = { andre: "Andre", cristina: "Cristina" };
   const CHANNEL_LABEL = { whatsapp: "WhatsApp", email: "Email", llamada: "Llamada", otro: "Otro" };
 
   const $ = (s, ctx) => (ctx || document).querySelector(s);
@@ -32,9 +32,12 @@
       headers: body ? { "Content-Type": "application/json" } : undefined,
       body: body ? JSON.stringify(body) : undefined,
     });
-    if (res.status === 401) { location.href = "login.html"; throw new Error("Não autenticado"); }
+    if (res.status === 401) {
+      location.href = "login.html";
+      throw new Error("No autenticado");
+    }
     if (!res.ok) {
-      let msg = "Erro " + res.status;
+      let msg = "Error " + res.status;
       try { msg = (await res.json()).error || msg; } catch (e) {}
       throw new Error(msg);
     }
@@ -46,18 +49,22 @@
       return navigator.clipboard.writeText(text);
     }
     const ta = document.createElement("textarea");
-    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
-    document.body.appendChild(ta); ta.focus(); ta.select();
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
     document.execCommand("copy");
     document.body.removeChild(ta);
     return Promise.resolve();
   }
 
-  // --- Router ---
   const routes = [
     { pattern: /^#\/dashboard$/, view: viewDashboard, tab: "dashboard" },
     { pattern: /^#\/contacts$/, view: viewContacts, tab: "contacts" },
     { pattern: /^#\/contacts\/new$/, view: viewNewContact, tab: "new" },
+    { pattern: /^#\/contacts\/([^/]+)\/edit$/, view: viewEditContact, tab: "" },
     { pattern: /^#\/contacts\/([^/]+)$/, view: viewContactDetail, tab: "" },
   ];
 
@@ -72,7 +79,7 @@
       if (m) {
         setActiveTab(r.tab);
         try { await r.view(...m.slice(1)); }
-        catch (e) { view.innerHTML = `<div class="empty">Erro: ${escapeHtml(e.message)}</div>`; }
+        catch (e) { view.innerHTML = `<div class="empty">Error: ${escapeHtml(e.message)}</div>`; }
         return;
       }
     }
@@ -80,53 +87,65 @@
   }
   window.addEventListener("hashchange", router);
 
-  // --- Dashboard ---
   async function viewDashboard() {
-    view.innerHTML = `<div class="empty">A carregar…</div>`;
+    view.innerHTML = `<div class="empty">Cargando...</div>`;
     const contacts = await api("GET", "/api/contacts");
     const total = contacts.length;
     const pendientes = contacts.filter((c) => c.status === "pendiente").length;
     const interesados = contacts.filter((c) => c.status === "interesado").length;
     const demos = contacts.filter((c) => c.status === "demo_agendada").length;
+    const won = contacts.filter((c) => c.status === "cliente").length;
+    const withAction = contacts
+      .filter((c) => c.next_action)
+      .sort((a, b) => (a.next_action_at || "9999").localeCompare(b.next_action_at || "9999"))
+      .slice(0, 8);
+
     view.innerHTML = `
+      <section class="hero-panel">
+        <div>
+          <div class="eyebrow">Trabajo comercial</div>
+          <h2>${total} contactos en seguimiento</h2>
+          <p>Prioriza quien necesita respuesta, quien mostro interes y cual es el siguiente paso.</p>
+        </div>
+        <a class="primary-link" href="#/contacts/new">+ Nuevo contacto</a>
+      </section>
       <div class="kpis">
-        <div class="kpi"><div class="label">Total contactos</div><div class="value">${total}</div></div>
+        <div class="kpi"><div class="label">Total</div><div class="value">${total}</div></div>
         <div class="kpi"><div class="label">Pendientes</div><div class="value" style="color:var(--pending)">${pendientes}</div></div>
         <div class="kpi"><div class="label">Interesados</div><div class="value" style="color:var(--won)">${interesados}</div></div>
-        <div class="kpi"><div class="label">Demo agendada</div><div class="value" style="color:var(--purple)">${demos}</div></div>
+        <div class="kpi"><div class="label">Demos</div><div class="value" style="color:var(--purple)">${demos}</div></div>
+        <div class="kpi wide"><div class="label">Clientes</div><div class="value" style="color:var(--won)">${won}</div></div>
       </div>
       <div class="panel">
-        <h2>Próximas acciones</h2>
+        <div class="section-head">
+          <h2>Proximas acciones</h2>
+          <a href="#/contacts">Ver todos</a>
+        </div>
         <div id="nextActions"></div>
       </div>
     `;
-    const withAction = contacts
-      .filter((c) => c.next_action)
-      .sort((a, b) => (a.next_action_at || "").localeCompare(b.next_action_at || ""))
-      .slice(0, 8);
     $("#nextActions").innerHTML = withAction.length
       ? withAction.map((c) => `
-          <a class="contact-card" href="#/contacts/${c.id}">
-            <div class="top">
-              <div class="name">${escapeHtml(c.business_name)}</div>
-              <span class="badge ${c.status}">${STATUS_META[c.status]}</span>
+          <a class="action-card" href="#/contacts/${c.id}">
+            <div>
+              <strong>${escapeHtml(c.business_name)}</strong>
+              <span>${escapeHtml(c.next_action)}${c.next_action_at ? " - " + escapeHtml(c.next_action_at) : ""}</span>
             </div>
-            <div class="meta">${escapeHtml(c.next_action)}${c.next_action_at ? " · " + escapeHtml(c.next_action_at) : ""}</div>
+            <span class="badge ${c.status}">${STATUS_META[c.status]}</span>
           </a>`).join("")
-      : `<div class="empty">Sem ações pendentes.</div>`;
+      : `<div class="empty compact">Sin acciones pendientes.</div>`;
   }
 
-  // --- Lista de contactos ---
   let listFilters = { status: "", owner: "", channel: "", q: "" };
 
   async function viewContacts() {
     view.innerHTML = `
       <div class="filters">
-        <input id="fq" placeholder="Buscar negocio, contacto, notas…" value="${escapeHtml(listFilters.q)}" />
+        <input id="fq" placeholder="Buscar negocio, contacto, notas..." value="${escapeHtml(listFilters.q)}" />
         <select id="fstatus"><option value="">Todos los estados</option>${STATUS_ORDER.map((s) =>
           `<option value="${s}" ${listFilters.status === s ? "selected" : ""}>${STATUS_META[s]}</option>`).join("")}</select>
-        <select id="fowner"><option value="">André / Cristina</option>
-          <option value="andre" ${listFilters.owner === "andre" ? "selected" : ""}>André</option>
+        <select id="fowner"><option value="">Andre / Cristina</option>
+          <option value="andre" ${listFilters.owner === "andre" ? "selected" : ""}>Andre</option>
           <option value="cristina" ${listFilters.owner === "cristina" ? "selected" : ""}>Cristina</option>
         </select>
         <select id="fchannel"><option value="">Todos los canales</option>
@@ -134,14 +153,23 @@
             `<option value="${v}" ${listFilters.channel === v ? "selected" : ""}>${l}</option>`).join("")}
         </select>
       </div>
-      <div id="list"><div class="empty">A carregar…</div></div>
+      <div class="list-toolbar">
+        <div>
+          <div class="eyebrow">Pipeline comercial</div>
+          <strong id="listCount">0 contactos</strong>
+        </div>
+        <a class="primary-link" href="#/contacts/new">+ Anadir</a>
+      </div>
+      <div id="list"><div class="empty">Cargando...</div></div>
     `;
+
     const load = async () => {
       const params = new URLSearchParams();
       Object.entries(listFilters).forEach(([k, v]) => { if (v) params.set(k, v); });
       const contacts = await api("GET", "/api/contacts?" + params.toString());
+      $("#listCount").textContent = `${contacts.length} contacto${contacts.length === 1 ? "" : "s"}`;
       $("#list").innerHTML = contacts.length ? contacts.map(contactCard).join("") :
-        `<div class="empty">Nenhum contacto encontrado.</div>`;
+        `<div class="empty">Ningun contacto encontrado.</div>`;
     };
     $("#fq").addEventListener("input", debounce((e) => { listFilters.q = e.target.value; load(); }, 300));
     $("#fstatus").addEventListener("change", (e) => { listFilters.status = e.target.value; load(); });
@@ -151,20 +179,32 @@
   }
 
   function contactCard(c) {
+    const contactBits = [c.mobile, c.email].filter(Boolean).map(escapeHtml).join(" - ");
+    const next = c.next_action
+      ? `${escapeHtml(c.next_action)}${c.next_action_at ? " - " + escapeHtml(c.next_action_at) : ""}`
+      : "Sin proxima accion definida";
     return `
-      <a class="contact-card" href="#/contacts/${c.id}">
+      <article class="contact-card status-${c.status}">
         <div class="top">
           <div>
             <div class="name">${escapeHtml(c.business_name)}</div>
-            <div class="meta">${escapeHtml(c.sector || "")}${c.contact_name ? " · " + escapeHtml(c.contact_name) : ""}</div>
+            <div class="meta">${escapeHtml(c.sector || "Sin sector")}${c.contact_name ? " - " + escapeHtml(c.contact_name) : ""}</div>
           </div>
           <span class="badge ${c.status}">${STATUS_META[c.status]}</span>
         </div>
+        <div class="contact-line">${contactBits || "Sin telefono/email guardado"}</div>
+        <div class="next-line ${c.next_action ? "" : "muted"}">${next}</div>
         <div class="bottom">
-          <span class="owner-chip">${OWNER_LABEL[c.owner] || c.owner}</span>
-          <span class="owner-chip">${CHANNEL_LABEL[c.channel] || c.channel}</span>
+          <div class="chips">
+            <span class="owner-chip">${OWNER_LABEL[c.owner] || c.owner}</span>
+            <span class="owner-chip">${CHANNEL_LABEL[c.channel] || c.channel}</span>
+          </div>
+          <div class="card-actions">
+            <a href="#/contacts/${c.id}">Ver</a>
+            <a href="#/contacts/${c.id}/edit">Editar</a>
+          </div>
         </div>
-      </a>`;
+      </article>`;
   }
 
   function debounce(fn, ms) {
@@ -172,75 +212,135 @@
     return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
   }
 
-  // --- Añadir contacto ---
   async function viewNewContact() {
-    view.innerHTML = `
-      <div class="panel">
-        <h2>Añadir contacto</h2>
-        <form id="form">
-          <label class="field"><span>Nombre del negocio *</span><input id="business_name" required /></label>
-          <div class="row2">
-            <label class="field"><span>Sector</span><input id="sector" placeholder="Ej.: dental, restauración…" /></label>
-            <label class="field"><span>Responsable</span>
-              <select id="owner"><option value="andre">André</option><option value="cristina">Cristina</option></select>
-            </label>
-          </div>
-          <div class="row2">
-            <label class="field"><span>Móvil</span><input id="mobile" /></label>
-            <label class="field"><span>Email</span><input id="email" type="email" /></label>
-          </div>
-          <div class="row2">
-            <label class="field"><span>Canal</span>
-              <select id="channel">
-                <option value="whatsapp">WhatsApp</option><option value="email">Email</option>
-                <option value="llamada">Llamada</option><option value="otro">Otro</option>
-              </select>
-            </label>
-            <label class="field"><span>Nombre de contacto</span><input id="contact_name" /></label>
-          </div>
-          <label class="field"><span>Notas</span><textarea id="notes"></textarea></label>
-          <button type="submit" class="block">Guardar contacto</button>
-        </form>
-      </div>
-    `;
+    renderContactForm({ mode: "new" });
     $("#form").addEventListener("submit", async (e) => {
       e.preventDefault();
       try {
-        const created = await api("POST", "/api/contacts", {
-          business_name: $("#business_name").value,
-          sector: $("#sector").value,
-          owner: $("#owner").value,
-          mobile: $("#mobile").value,
-          email: $("#email").value,
-          channel: $("#channel").value,
-          contact_name: $("#contact_name").value,
-          notes: $("#notes").value,
-        });
-        toast("Contacto añadido");
+        const created = await api("POST", "/api/contacts", collectContactForm());
+        toast("Contacto anadido");
         location.hash = "#/contacts/" + created.id;
       } catch (err) { toast(err.message); }
     });
   }
 
-  // --- Detalle de contacto ---
+  async function viewEditContact(id) {
+    view.innerHTML = `<div class="empty">Cargando...</div>`;
+    const c = await api("GET", `/api/contacts/${id}`);
+    renderContactForm({ mode: "edit", contact: c });
+    $("#form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        await api("PATCH", `/api/contacts/${id}`, collectContactForm());
+        toast("Contacto actualizado");
+        location.hash = "#/contacts/" + id;
+      } catch (err) { toast(err.message); }
+    });
+  }
+
+  function formValue(contact, key, fallback = "") {
+    return escapeHtml(contact ? contact[key] ?? fallback : fallback);
+  }
+
+  function selected(contact, key, value, fallback) {
+    const current = contact ? contact[key] || fallback : fallback;
+    return current === value ? "selected" : "";
+  }
+
+  function renderContactForm({ mode, contact }) {
+    const isEdit = mode === "edit";
+    view.innerHTML = `
+      <div class="panel form-panel">
+        <div class="form-head">
+          <div>
+            <div class="eyebrow">${isEdit ? "Editar ficha" : "Nuevo contacto"}</div>
+            <h2>${isEdit ? escapeHtml(contact.business_name) : "Anadir contacto"}</h2>
+          </div>
+          <a class="ghost-link" href="${isEdit ? "#/contacts/" + contact.id : "#/contacts"}">Cancelar</a>
+        </div>
+        <form id="form">
+          <label class="field"><span>Nombre del negocio *</span><input id="business_name" required value="${formValue(contact, "business_name")}" /></label>
+          <div class="row2">
+            <label class="field"><span>Sector</span><input id="sector" placeholder="Ej.: dental, restauracion..." value="${formValue(contact, "sector")}" /></label>
+            <label class="field"><span>Responsable</span>
+              <select id="owner">
+                <option value="andre" ${selected(contact, "owner", "andre", "andre")}>Andre</option>
+                <option value="cristina" ${selected(contact, "owner", "cristina", "andre")}>Cristina</option>
+              </select>
+            </label>
+          </div>
+          <div class="row2">
+            <label class="field"><span>Movil</span><input id="mobile" value="${formValue(contact, "mobile")}" /></label>
+            <label class="field"><span>Email</span><input id="email" type="email" value="${formValue(contact, "email")}" /></label>
+          </div>
+          <div class="row2">
+            <label class="field"><span>Canal preferido</span>
+              <select id="channel">
+                ${Object.entries(CHANNEL_LABEL).map(([v, l]) => `<option value="${v}" ${selected(contact, "channel", v, "whatsapp")}>${l}</option>`).join("")}
+              </select>
+            </label>
+            <label class="field"><span>Estado</span>
+              <select id="status">
+                ${STATUS_ORDER.map((s) => `<option value="${s}" ${selected(contact, "status", s, "pendiente")}>${STATUS_META[s]}</option>`).join("")}
+              </select>
+            </label>
+          </div>
+          <div class="row2">
+            <label class="field"><span>Nombre de contacto</span><input id="contact_name" value="${formValue(contact, "contact_name")}" /></label>
+            <label class="field"><span>Fuente</span><input id="source" placeholder="Google Maps, recomendacion..." value="${formValue(contact, "source")}" /></label>
+          </div>
+          <label class="field"><span>URL de fuente</span><input id="source_url" value="${formValue(contact, "source_url")}" /></label>
+          <div class="row2">
+            <label class="field"><span>Proxima accion</span><input id="next_action" value="${formValue(contact, "next_action")}" /></label>
+            <label class="field"><span>Fecha</span><input id="next_action_at" type="date" value="${formValue(contact, "next_action_at")}" /></label>
+          </div>
+          <label class="field"><span>Mensaje preparado</span><textarea id="last_message">${formValue(contact, "last_message")}</textarea></label>
+          <label class="field"><span>Notas</span><textarea id="notes">${formValue(contact, "notes")}</textarea></label>
+          <button type="submit" class="block">${isEdit ? "Guardar cambios" : "Guardar contacto"}</button>
+        </form>
+      </div>
+    `;
+  }
+
+  function collectContactForm() {
+    return {
+      business_name: $("#business_name").value,
+      sector: $("#sector").value,
+      owner: $("#owner").value,
+      mobile: $("#mobile").value,
+      email: $("#email").value,
+      channel: $("#channel").value,
+      status: $("#status").value,
+      contact_name: $("#contact_name").value,
+      source: $("#source").value,
+      source_url: $("#source_url").value,
+      next_action: $("#next_action").value,
+      next_action_at: $("#next_action_at").value,
+      last_message: $("#last_message").value,
+      notes: $("#notes").value,
+    };
+  }
+
   async function viewContactDetail(id) {
-    view.innerHTML = `<div class="empty">A carregar…</div>`;
+    view.innerHTML = `<div class="empty">Cargando...</div>`;
     const [c, interactions] = await Promise.all([
       api("GET", `/api/contacts/${id}`),
       api("GET", `/api/contacts/${id}/interactions`),
     ]);
     view.innerHTML = `
       <div class="panel">
-        <div class="top" style="display:flex;justify-content:space-between;align-items:start;">
+        <div class="detail-head">
           <div>
-            <h2 style="margin-bottom:2px">${escapeHtml(c.business_name)}</h2>
-            <div class="meta" style="color:var(--muted);font-size:13px">
-              ${escapeHtml(c.sector || "")}${c.contact_name ? " · " + escapeHtml(c.contact_name) : ""}
-            </div>
+            <div class="eyebrow">Ficha comercial</div>
+            <h2>${escapeHtml(c.business_name)}</h2>
+            <div class="meta">${escapeHtml(c.sector || "Sin sector")}${c.contact_name ? " - " + escapeHtml(c.contact_name) : ""}</div>
           </div>
-          <span class="owner-chip">${OWNER_LABEL[c.owner] || c.owner}</span>
+          <div class="detail-actions">
+            <span class="owner-chip">${OWNER_LABEL[c.owner] || c.owner}</span>
+            <a class="ghost-link" href="#/contacts/${c.id}/edit">Editar</a>
+          </div>
         </div>
-        <div class="hint">${escapeHtml(c.mobile || "")} ${c.email ? " · " + escapeHtml(c.email) : ""}</div>
+        <div class="contact-line">${escapeHtml(c.mobile || "")}${c.email ? " - " + escapeHtml(c.email) : ""}</div>
       </div>
 
       <div class="panel">
@@ -253,11 +353,11 @@
       </div>
 
       <div class="panel">
-        <h2>Próxima acción</h2>
+        <h2>Proxima accion</h2>
         <form id="nextForm">
-          <label class="field"><span>Qué hacer</span><input id="next_action" value="${escapeHtml(c.next_action)}" /></label>
-          <label class="field"><span>Cuándo</span><input id="next_action_at" type="date" value="${escapeHtml(c.next_action_at)}" /></label>
-          <button type="submit" class="ghost">Guardar próxima acción</button>
+          <label class="field"><span>Que hacer</span><input id="next_action" value="${escapeHtml(c.next_action)}" /></label>
+          <label class="field"><span>Cuando</span><input id="next_action_at" type="date" value="${escapeHtml(c.next_action_at)}" /></label>
+          <button type="submit" class="ghost">Guardar proxima accion</button>
         </form>
       </div>
 
@@ -270,10 +370,10 @@
       </div>
 
       <div class="panel">
-        <h2>Registrar interacción</h2>
+        <h2>Registrar interaccion</h2>
         <form id="interactionForm">
           <div class="row2">
-            <label class="field"><span>Dirección</span>
+            <label class="field"><span>Direccion</span>
               <select id="direction"><option value="outbound">Enviado</option><option value="inbound">Recibido</option></select>
             </label>
             <label class="field"><span>Canal</span>
@@ -283,8 +383,8 @@
             </label>
           </div>
           <label class="field"><span>Mensaje</span><textarea id="message"></textarea></label>
-          <label class="field"><span>Resultado</span><input id="outcome" placeholder="Ej.: sin respuesta, interesado…" /></label>
-          <button type="submit" class="block">Añadir al historial</button>
+          <label class="field"><span>Resultado</span><input id="outcome" placeholder="Ej.: sin respuesta, interesado..." /></label>
+          <button type="submit" class="block">Anadir al historial</button>
         </form>
       </div>
 
@@ -293,8 +393,8 @@
         <div id="history">${renderHistory(interactions)}</div>
       </div>
 
-      <label class="field"><span>Notas</span><textarea id="notes">${escapeHtml(c.notes)}</textarea></label>
-      <button type="button" id="saveNotes" class="ghost">Guardar notas</button>
+      <label class="field standalone"><span>Notas rapidas</span><textarea id="notes">${escapeHtml(c.notes)}</textarea></label>
+      <button type="button" id="saveNotes" class="ghost block">Guardar notas</button>
     `;
 
     $("#statusGrid").addEventListener("click", async (e) => {
@@ -314,7 +414,7 @@
           next_action: $("#next_action").value,
           next_action_at: $("#next_action_at").value,
         });
-        toast("Próxima acción guardada");
+        toast("Proxima accion guardada");
       } catch (err) { toast(err.message); }
     });
 
@@ -339,18 +439,18 @@
           message: $("#message").value,
           outcome: $("#outcome").value,
         });
-        toast("Interacción registrada");
+        toast("Interaccion registrada");
         viewContactDetail(id);
       } catch (err) { toast(err.message); }
     });
   }
 
   function renderHistory(items) {
-    if (!items.length) return `<div class="empty">Sin interacciones todavía.</div>`;
+    if (!items.length) return `<div class="empty compact">Sin interacciones todavia.</div>`;
     return items.map((i) => `
       <div class="interaction ${i.direction}">
         <div class="head">
-          <span>${i.direction === "outbound" ? "→ Enviado" : "← Recibido"}</span>
+          <span>${i.direction === "outbound" ? "Enviado" : "Recibido"}</span>
           <span>${CHANNEL_LABEL[i.channel] || i.channel}</span>
           <span>${escapeHtml((i.created_at || "").slice(0, 16).replace("T", " "))}</span>
         </div>
@@ -360,7 +460,6 @@
     `).join("");
   }
 
-  // --- Boot ---
   async function boot() {
     try {
       const me = await api("GET", "/api/me");
