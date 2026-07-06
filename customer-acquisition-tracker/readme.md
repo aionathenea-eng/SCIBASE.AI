@@ -31,6 +31,31 @@ Variáveis de ambiente opcionais:
 - `PORT` — porta (por omissão `3000`).
 - `DB_PATH` — caminho do ficheiro da base de dados (por omissão `data.db` na pasta da app).
 
+## Pôr online (usar no telemóvel)
+
+Para usar a app no telemóvel, ela tem de estar acessível por um **link**. A forma
+mais fácil é publicá-la na [Render](https://render.com):
+
+1. Cria uma conta grátis na Render e liga a tua conta do GitHub.
+2. **New → Blueprint** e escolhe este repositório. A Render lê o `render.yaml`
+   e cria o serviço automaticamente.
+   (Em alternativa: **New → Web Service**, escolhe o repositório, define
+   *Root Directory* = `customer-acquisition-tracker`, *Build* = `npm install`,
+   *Start* = `npm start`.)
+3. Ao terminar, a Render dá um endereço tipo
+   `https://captacao-clientes.onrender.com`.
+4. Abre esse link no telemóvel. No Android (Chrome) usa **⋮ → Adicionar ao ecrã
+   principal**; no iPhone (Safari) usa **Partilhar → Adicionar ao ecrã principal**.
+   Fica com um ícone como se fosse uma app.
+
+Como toda a gente abre o mesmo link, os contactos são **partilhados** — o que ela
+adiciona no telemóvel aparece para ti, e vice-versa.
+
+> **Dados permanentes:** o `render.yaml` já inclui um disco persistente (plano
+> `starter`), por isso os contactos não se perdem. O plano `free` serve para
+> testar, mas pode apagar os dados nos reinícios — para uso a sério, mantém o
+> disco.
+
 ## Funcionalidades
 
 - **Registo de contactos** — nome/empresa, canal (Email, Telefone, LinkedIn,
