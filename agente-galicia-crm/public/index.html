@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agente Galicia CRM</title>
+<meta name="theme-color" content="#0f1420" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="AG CRM" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<link rel="icon" href="icon.svg" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="app">
+  <h1>AG <span>CRM</span></h1>
+  <nav class="tabs" id="tabs">
+    <a href="#/dashboard" data-route="dashboard">Dashboard</a>
+    <a href="#/contacts" data-route="contacts">Contactos</a>
+    <a href="#/contacts/new" data-route="new">Añadir</a>
+  </nav>
+  <div class="user-box">
+    <span id="whoami"></span>
+    <button id="logout">Salir</button>
+  </div>
+</header>
+
+<main class="view" id="view"></main>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

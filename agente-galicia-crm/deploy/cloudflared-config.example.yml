@@ -1,0 +1,15 @@
+# Exemplo de configuração do Cloudflare Tunnel para expor a app sem tocar
+# no nginx/caddy existente (que já ocupa as portas 80/443 via docker-proxy).
+#
+# Copiar para /etc/cloudflared/config.yml na VPS (ajustando o tunnel/credentials-file
+# que o `cloudflared tunnel create` gera) e depois:
+#   cloudflared tunnel route dns <nome-do-tunnel> crm.agentegalicia.com
+#   systemctl enable --now cloudflared
+
+tunnel: <ID_DO_TUNNEL>
+credentials-file: /etc/cloudflared/<ID_DO_TUNNEL>.json
+
+ingress:
+  - hostname: crm.agentegalicia.com
+    service: http://127.0.0.1:8790
+  - service: http_status:404

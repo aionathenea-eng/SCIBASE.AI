@@ -1,0 +1,26 @@
+[Unit]
+Description=Agente Galicia CRM
+After=network.target
+
+[Service]
+Type=simple
+User=agente-galicia-crm
+Group=agente-galicia-crm
+WorkingDirectory=/opt/agente-galicia-crm/app
+EnvironmentFile=/etc/agente-galicia-crm/.env
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=3
+
+# Isolamento — a app só precisa de escrever no seu volume de dados e logs.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/mnt/donotact-data/agente-galicia-crm /var/log/agente-galicia-crm
+PrivateTmp=true
+
+StandardOutput=append:/var/log/agente-galicia-crm/app.log
+StandardError=append:/var/log/agente-galicia-crm/error.log
+
+[Install]
+WantedBy=multi-user.target
