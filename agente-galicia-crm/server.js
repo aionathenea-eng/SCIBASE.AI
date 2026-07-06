@@ -9,6 +9,9 @@ import { checkLogin, requireAuth, USERS } from "./auth.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 8790);
 const HOST = process.env.HOST || "127.0.0.1";
+const COOKIE_SECURE = process.env.COOKIE_SECURE
+  ? process.env.COOKIE_SECURE !== "false"
+  : process.env.NODE_ENV === "production";
 
 if (!process.env.SESSION_SECRET) {
   console.error("SESSION_SECRET não definido. Configura /etc/agente-galicia-crm/.env");
@@ -36,7 +39,7 @@ app.use(session({
   cookie: {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: COOKIE_SECURE,
     maxAge: 30 * 24 * 60 * 60 * 1000,
   },
 }));

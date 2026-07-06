@@ -107,6 +107,10 @@ curl -H "Authorization: Bearer <CRM_API_TOKEN>" http://127.0.0.1:8790/api/contac
 
 Se isto funcionar, a app está operacional — falta só expor ao exterior.
 
+Se for preciso testar a UI por túnel SSH antes de haver HTTPS público, definir
+`COOKIE_SECURE=false` no `/etc/agente-galicia-crm/.env`. Quando
+`https://crm.agentegalicia.com` estiver ativo, voltar a `COOKIE_SECURE=true`.
+
 ## 6. Expor `crm.agentegalicia.com` sem tocar no proxy existente
 
 Como as portas 80/443 já estão ocupadas por docker-proxy, a forma mais segura
